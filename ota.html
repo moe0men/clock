@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OTA Update</title>
+    <style>
+        :root {
+            --bg: #0f1115;
+            --card: #1a1d23;
+            --border: #2a2f38;
+            --text: #e9ecef;
+            --muted: #9aa0a6;
+            --primary-color: #4dabf7;
+            --primary-hover-color: #339af0;
+            --shadow-color: rgba(0, 0, 0, 0.6);
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: var(--font-family);
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 0.5rem;
+            background: #2a2a2a;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .button {
+            margin-top: 1.5rem;
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--primary-color);
+            color: var(--text);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .button:hover {
+            background-color: var(--primary-hover-color);
+            color: var(--text);
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>OTA Update</h1>
+    <form id="otaForm" enctype="multipart/form-data">
+        <input type="file" name="update" accept=".bin" required>
+        <input type="submit" id="updateBtn" value="Update Firmware" class="button">
+    </form>
+</div>
+
+<script>
+    const form = document.getElementById('otaForm');
+    const btn = document.getElementById('updateBtn');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fileInput = form.querySelector('input[type="file"]');
+        if (!fileInput.files.length) return;
+
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('update', file);
+
+        // change button to loading
+        btn.value = 'Updating...';
+        btn.disabled = true;
+
+        const response = await fetch('/update', {
+            method: 'POST',
+            body: formData
+        });
+
+        const text = await response.text();
+        let countdown = 30;
+        const interval = setInterval(() => {
+            btn.value = `${text}\nRedirecting in ${countdown} seconds...`;
+            countdown--;
+
+            if (countdown < 0) {
+                clearInterval(interval);
+                window.location.href = '/';
+            }
+        }, 1000);
+    });
+</script>
+</body>
+</html>
